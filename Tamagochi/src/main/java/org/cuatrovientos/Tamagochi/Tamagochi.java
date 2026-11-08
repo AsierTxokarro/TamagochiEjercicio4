@@ -9,6 +9,8 @@ public class Tamagochi implements Runnable{
 	private Random rnd = new Random();
 	private long timesStampInicio;
 	private long timesStampUltimaLimpieza;
+	private long msComer;
+	private int manzanasPendientes = 0;
 	private static final long VIDA_MAXIMA_MS = 60000;
 	private static final long INTERVALO_SUCIEDAD_MS = 2000;
 	private static final int SUCIEDAD_AVISO = 5;
@@ -18,6 +20,7 @@ public class Tamagochi implements Runnable{
 	public Tamagochi(int id, String nombre) {
 		this.id = id;
 		this.nombre = nombre;
+		this.msComer = rnd.nextLong(1000, 5000);
 	}
 
 	@Override
@@ -31,6 +34,12 @@ public class Tamagochi implements Runnable{
 		while (( tiempoVivido() < VIDA_MAXIMA_MS) && sucio < SUCIEDAD_MAXIMA) {
 			try {
 				Thread.sleep(500);
+				
+				if (comerManzana()) {
+					logConTimestamp("Empieza a comer");
+					Thread.sleep(msComer);
+					logConTimestamp("Termina de comer");
+				}
 				calcularSuciedad();
 				if(sucio >= SUCIEDAD_AVISO && !avisoDado) {
 					
@@ -59,6 +68,16 @@ public class Tamagochi implements Runnable{
 	private void calcularSuciedad() {
 		long ultimaLimpieza = System.currentTimeMillis() - timesStampUltimaLimpieza;
 		sucio = (int) Math.min(ultimaLimpieza / INTERVALO_SUCIEDAD_MS, SUCIEDAD_MAXIMA);
+	}
+	public synchronized void darManzana() {
+		manzanasPendientes += 1;
+	}
+	public synchronized boolean comerManzana() {
+		if(manzanasPendientes > 0) {
+			manzanasPendientes -= 1;
+			return true;
+		}
+		return false;
 	}
 	
 	  private void logConTimestamp(String log){
